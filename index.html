@@ -1,11 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chekken 9</title>
     <style>
-        * {
+         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -14,47 +12,93 @@
         body {
             background-color: #333;
             font-family: Arial, sans-serif;
+            color: #f1f1f1;
         }
 
         #game-container {
-    position: relative;
-    text-align: center;
-    padding: 20px;
-    color: white;
-}
+            position: relative;
+            text-align: center;
+            padding: 20px;
+        }
 
-canvas {
-    display: block;
-    margin: 0 auto;
-}
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
 
-#retry-btn {
-    display: none;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
+        #retry-btn {
+            display: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
 
-#retry-btn:hover {
-    background-color: #0056b3;
-}
+        #retry-btn:hover {
+            background-color: #0056b3;
+        }
+
+        #game-over-text {
+            display: none;
+            font-size: 36px;
+            font-weight: bold;
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff4444;
+            text-shadow: 2px 2px #000;
+        }
+
+        #description, #warning {
+            margin: 20px auto;
+            font-size: 18px;
+            text-align: center;
+            max-width: 800px;
+        }
+
+        #warning {
+            color: #ffc107;
+            font-size: 16px;
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .controls h3 {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+
+        .controls p {
+            font-size: 18px;
+            line-height: 1.5;
+        }
+
+    </style>
+
     </style>
 </head>
 
 <body>
-
 <div id="game-container">
     <h1>Chekken 9</h1>
     <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <div id="game-over-text">Game Over!</div>
     <button id="retry-btn">Retry</button>
+
+    <div id="description">
+        <p>Welcome to Chekken 9! A fun two-player fighting game where the goal is to knock out your opponent by reducing their health to zero. Use the controls below to move, punch, and jump.</p>
+    </div>
 
     <div class="controls">
         <h3>Controls:</h3>
@@ -62,14 +106,15 @@ canvas {
             <strong>Player 1:</strong> Move: A, D | Punch: S | Jump: W <br>
             <strong>Player 2:</strong> Move: Arrow keys | Punch: Down Arrow | Jump: Up Arrow
         </p>
+
+        
     </div>
+
+    <div id="warning">
+        <p><strong>Warning:</strong> This game is currently in development. You may encounter bugs such as collision issues, delayed punch animations, or unexpected game crashes. We appreciate your understanding and feedback!</p>
 </div>
 
-
-<script src="//code.tidio.co/1ezu3klhmbdwuyeij1gow5tbxto87tr8.js"></script>
-
 <script>
-    
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
@@ -79,10 +124,11 @@ canvas {
     const chickenImg = new Image();
     chickenImg.src = 'chicc.png';
 
+    const chickenImg2 = new Image();
+    chickenImg2.src = 'chicc2.png';
+
     const bgImg = new Image();
     bgImg.src = 'back.gif';
-
-
 
     const punchImgs = [];
 
@@ -101,21 +147,19 @@ canvas {
     function playRandomPunchSfx() {
         const randomIndex = Math.floor(Math.random() * punchSfxFiles.length);
         punchSfxFiles[randomIndex].play();
-
     }
 
     let player1, player2, game;
 
     const bgMusic = new Audio('aot.mp3');
-    bgMusic.loop = true;  
+    bgMusic.loop = true;
     bgMusic.volume = 1;
 
-    function bgAot(){
-        //bgMusic.play();
+    function bgAot() {
+        // bgMusic.play();
     }
-    
-    function initializeGame() {
 
+    function initializeGame() {
         player1 = {
             x: 50,
             y: groundLevel,
@@ -151,11 +195,12 @@ canvas {
             flash: false,
             isDead: false,
         };
+
         game = {
             keys: {},
             gameOver: false,
         };
-        
+
         document.addEventListener('keydown', (e) => {
             game.keys[e.key] = true;
         });
@@ -166,9 +211,8 @@ canvas {
             if (e.key === 'ArrowDown') player2.isPunching = false;
         });
 
-   
         document.getElementById('retry-btn').style.display = 'none'; // Hide the retry button
-  
+        document.getElementById('game-over-text').style.display = 'none'; // Hide the game-over text
     }
 
     function drawPlayer(player, image) {
@@ -186,7 +230,7 @@ canvas {
             if (player.punchTime % 5 === 0) {
                 player.punchFrame = (player.punchFrame + 1) % punchImgs.length;
             }
-        
+
             ctx.save();
             ctx.fillStyle = 'yellow';
             ctx.globalAlpha = 0.5;
@@ -300,12 +344,12 @@ canvas {
             defender.y + defender.height > attacker.y &&
             defender.y < attacker.y + attacker.height &&
             ((attacker.facingRight && defender.x < attackEndX && defender.x + defender.width > attackStartX) ||
-             (!attacker.facingRight && defender.x + defender.width > attackEndX && defender.x < attackStartX))
+                (!attacker.facingRight && defender.x + defender.width > attackEndX && defender.x < attackStartX))
         ) {
             defender.health -= 10;
             defender.flash = true;
-            playRandomPunchSfx(); 
-            
+            playRandomPunchSfx();
+
             if (defender.health <= 0) {
                 defender.isDead = true;
                 defender.health = 0;
@@ -332,10 +376,11 @@ canvas {
 
     function checkGameOver() {
         if (player1.isDead || player2.isDead) {
-            ctx.fillStyle = 'white';
-            ctx.font = '30px Arial';
-            ctx.fillText(player1.isDead ? 'Player 2 Wins!' : 'Player 1 Wins!', canvas.width / 2 - 100, canvas.height / 2);
-            document.getElementById('retry-btn').style.display = 'block'; // Show the retry button
+            const gameOverText = document.getElementById('game-over-text');
+            gameOverText.textContent = player1.isDead ? 'Player 2 Wins!' : 'Player 1 Wins!';
+            gameOverText.style.display = 'block';
+
+            document.getElementById('retry-btn').style.display = 'block'; 
             return true;
         }
         return false;
@@ -350,11 +395,11 @@ canvas {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         if (checkGameOver()) return;
-        
+
         bgAot();
         drawBackground();
         drawPlayer(player1, chickenImg);
-        drawPlayer(player2, chickenImg);
+        drawPlayer(player2, chickenImg2);
         drawHealthBars();
         handlePlayerMovement();
         applyGravity(player1);
